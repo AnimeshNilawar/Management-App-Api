@@ -118,6 +118,6 @@ We welcome contributions from the community to enhance our APIs further. Feel fr
 
 ## License
 
-This Recipe App is licensed under the [MIT License](https://choosealicense.com/licenses/mit/), allowing for open collaboration and innovation in the spirit of shared knowledge.
+This is licensed under the [MIT License](https://choosealicense.com/licenses/mit/), allowing for open collaboration and innovation in the spirit of shared knowledge.
 
 Thank you for being part of the Sweeto User App! If you have any questions or suggestions, feel free to open an issue or reach out to us. Happy coding! 🚀📞
