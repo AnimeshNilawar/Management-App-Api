@@ -1,8 +1,9 @@
 from flask import Flask, jsonify, request
-from database.create import createUser, createTables
-from database.GetUsers import getAllUser, getSpecificUser
-from database.userOperation import blockedAPi, ApprovedAPi, updateUserLevelAPi
-from database.productsOperations import add_product, productisActiveAPi, updatePriceAPi, updateStockAPi
+from database.create import createTables
+from database.UserOperations import createUser, update_User_details,getAllUser,getSpecificUser
+from database.productsOperations import add_product, getAllProducts, getSpecificProduct, updateProductDetails
+from database.orderOperations import orderDetails, updateOrderDetails, getAllOrders, getOrderDetailsByFilter
+
 
 app = Flask(__name__)
 
@@ -28,166 +29,176 @@ def createUserRoute():
         }
         return jsonify(response), 500
 
-@app.route('/getAllUsers', methods=['GET'])
-def getAllUsers():
-    return jsonify(getAllUser())
+@app.route('/getAllUser', methods=['GET'])
+def getAllUserRoute():
+    users = getAllUser()
+    try:
+        return jsonify(users), 200
+    except Exception as e:
+        return jsonify({'status': '500','message': str(e) }), 500
+    
+@app.route('/getSpecificUser', methods=['GET'])
+def getSpecificUserRoute():
+    user_id = request.form['user_id']
+    user = getSpecificUser(user_id)
+    try:
+        return jsonify(user), 200
+    except Exception as e:
+        return jsonify({'status': '500', 'message': str(e) }), 500
+    
+@app.route('/updateUser', methods=['PATCH'])
+def updateUserRoute():
+    try:
+        id = request.form['id']
+        updateUser = {}
+        for key, value in request.form.items():
+            if key != 'id':
+                updateUser[key] = value
+            update_User_details(id, **updateUser)
 
-@app.route('/', methods=['GET'])
-def home():
-    return "Hello"
+            return jsonify({'status': 200, 'message': 'User updated successfully'}), 200
+    except Exception as e:
+        return jsonify({'status': 500, 'message': str(e)}), 500
+    
 
-@app.route('/getSpecificUsers', methods=['GET']) 
-def getSpecificUsers():
-    user_id = request.args.get('user_id')
-    if user_id is None:
-        response = {
-            'status': 400,
-            'message': 'User ID not provided'
-        }
-        return jsonify(response), 400
-    else:
-        user = getSpecificUser(user_id)
-        if user:
+@app.route('/CreateProduct', methods=['POST'])
+def createProductRoute():
+    try:
+        name = request.form['name']
+        brand = request.form['brand']
+        price = request.form['price']
+        category = request.form['category']
+        stock = request.form['stock']
+        isActive = request.form['isActive']
+
+        if add_product(name=name, brand=brand, price=price, category=category, stock=stock, isActive=isActive):
             response = {
                 'status': 200,
-                'message': 'User found',
-                'user': user
+                'message': 'Successfully created'
             }
             return jsonify(response), 200
-        else:
+    except Exception as e:
+        response = {
+            'status': 500,
+            'message': str(e)
+        }
+        return jsonify(response), 500
+    
+@app.route('/getAllProducts', methods=['GET'])
+def getAllProductsRoute():
+    products = getAllProducts()
+    try:
+        return jsonify(products), 200
+    except Exception as e:
+        response = {
+            'status': 500,
+            'message': str(e)
+        }
+        return jsonify(response), 500
+
+@app.route('/getSpecificProduct', methods=['GET'])
+def getSpecificProductRoute():
+    product_id = request.form['product_id']
+    product = getSpecificProduct(product_id)
+    try:
+        return jsonify(product), 200
+    except Exception as e:
+        response = {
+            'status': 500,
+            'message': str(e)
+        }
+        return jsonify(response), 500
+    
+@app.route('/updateProduct', methods=['PATCH'])
+def updateProductRoute():
+    try:
+        id = request.form['product_id']
+        updateProduct = {}
+        for key, value in request.form.items():
+            if key != 'id':
+                updateProduct[key] = value
+            updateProductDetails(id, **updateProduct)
             response = {
-                'status': 404,
-                'message': 'User not found'
+                'status': 200,
+                'message': 'Product updated successfully'
             }
-            return jsonify(response), 404
-    
-
-@app.route('/userBlocked', methods=['PATCH'])
-def userBlocked():
-    id = request.form['id']
-    blocked = request.form['blocked']
-    if blockedAPi(id=id, blocked=blocked):
-        response = {
-            'status': 200,
-            'message': 'User blocked successfully'
-        }
-        return jsonify(response), 200
-    else:
+            return jsonify(response), 200
+    except Exception as e:
         response = {
             'status': 500,
-            'message': 'Failed to block user'
+            'message': str(e)
         }
         return jsonify(response), 500
 
-@app.route('/userApproved', methods=['PATCH'])
-def userApproved():
-    id = request.form['id']
-    approved = request.form['approved']
-    if ApprovedAPi(id=id, approved=approved):
-        response = {
+@app.route('/orderDetails', methods=['POST'])
+def orderDetailsRoute():
+    try:
+        user_id = request.form['user_id']
+        product_id = request.form['product_id']
+        status = request.form['status']
+        quantity = request.form['quantity']
+        total_amount = request.form['total_amount']
+
+        if orderDetails(user_id=user_id, product_id=product_id, status=status, quantity=quantity, total_amount=total_amount):
+            response = {
             'status': 200,
-            'message': 'User approved successfully'
+            'message': 'Order placed successfully'
         }
         return jsonify(response), 200
-    else:
+    except Exception as e:
         response = {
             'status': 500,
-            'message': 'Failed to approve user'
-        }
-        return jsonify(response), 500
-
-@app.route('/userLevel', methods=['PATCH'])  
-def userLevel():
-    id = request.form['id']
-    level = request.form['level']
-    if updateUserLevelAPi(id=id, level=level):
-        response = {
-            'status': 200,
-            'message': 'User level updated successfully'
-        }
-        return jsonify(response), 200
-    else:
-        response = {
-            'status': 500,
-            'message': 'Failed to update user level'
-        }
-        return jsonify(response), 500
-
-@app.route('/createProduct', methods=['POST'])
-def createProduct():
-    name = request.form['name']
-    brand = request.form['brand']
-    description = request.form['description']
-    price = request.form['price']
-    category = request.form['category']
-    stock = request.form['stock']
-    isActive = request.form['isActive']
-
-    if add_product(name=name, brand=brand, description=description, price=price, category=category, stock=stock, isActive=isActive):
-        response = {
-            'status': 200,
-            'message': 'Successfully created'
-        }
-        return jsonify(response), 200
-    else:
-        response = {
-            'status': 500,
-            'message': 'Failed to create product'
+            'message': str(e)
         }
         return jsonify(response), 500
     
-@app.route('/productisActive', methods=['PATCH'])
-def productisActive():
-    name = request.form['name']
-    isActive = request.form['isActive']
-    if productisActiveAPi(name=name, isActive=isActive):
-        response = {
-            'status': 200,
-            'message': 'Product status updated successfully'
-        }
-        return jsonify(response), 200
-    else:
+@app.route('/getAllOrders', methods=['GET'])
+def getAllOrdersRoute():
+    orders = getAllOrders()
+    try:
+        return jsonify(orders), 200
+    except Exception as e:
         response = {
             'status': 500,
-            'message': 'Failed to update product status'
-        }
-        return jsonify(response), 500
-
-@app.route('/updatePrice', methods=['PATCH'])
-def updatePrice():
-    name = request.form['name']
-    price = request.form['price']
-
-    if updatePriceAPi(name=name, price=price):
-        response = {
-            'status': 200,
-            'message': 'Price updated successfully'
-        }
-        return jsonify(response), 200
-    else:
-        response = {
-            'status': 500,
-            'message': 'Failed to update price'
+            'message': str(e)
         }
         return jsonify(response), 500
     
-@app.route('/updateStock', methods=['PATCH'])
-def updateStock():
-    name = request.form['name']
-    stock = request.form['stock']
-
-    if updateStockAPi(name=name, stock=stock):
-        response = {
-            'status': 200,
-            'message': 'Stock updated successfully'
-        }
-        return jsonify(response), 200
-    else:
+@app.route('/getOrderDetailsByFilter', methods=['GET'])
+def getOrderDetailsByFilterRoute():
+    user_id = request.form['user_id']
+    isApproved = request.form['isApproved']
+    orders = getOrderDetailsByFilter(user_id, isApproved)
+    try:
+        return jsonify(orders), 200
+    except Exception as e:
         response = {
             'status': 500,
-            'message': 'Failed to update stock'
+            'message': str(e)
         }
         return jsonify(response), 500
+    
+@app.route('/updateOrder', methods=['PATCH'])
+def updateOrderRoute():
+    try:
+        id = request.form['id']
+        updateOrder = {}
+        for key, value in request.form.items():
+            if key != 'id':
+                updateOrder[key] = value
+            updateOrderDetails(id, **updateOrder)
+            response = {
+                'status': 200,
+                'message': 'Order updated successfully'
+            }
+            return jsonify(response), 200
+    except Exception as e:
+        response = {
+            'status': 500,
+            'message': str(e)
+        }
+        return jsonify(response), 500
+
 
 
 if __name__ == '__main__':
