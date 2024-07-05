@@ -8,8 +8,8 @@ def orderDetails(user_id, product_id, status, quantity, total_amount):
     date_of_create_order = date.today()
 
     try:
-        cursor.execute(''' INSERT INTO Orders (user_id, product_id, status, quantity, date_of_create_order, total_amount) VALUES (?, ?, ?, ?, ?, ?)''', 
-                       (user_id, product_id, status, quantity, date_of_create_order, total_amount))
+        cursor.execute(''' INSERT INTO Orders (user_id, product_id, status, isApproved, quantity, date_of_create_order, total_amount) VALUES (?, ?, ?, ?, ?, ?, ?)''', 
+                       (user_id, product_id, status, "" , quantity, date_of_create_order, total_amount))
         conn.commit()
         return True
     except sqlite3.Error as e:
